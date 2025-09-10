@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MicroShare - Your Micro-Blog</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .compose {
+            padding: 30px;
+            border-bottom: 1px solid #e1e8ed;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .compose-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .textarea-container {
+            position: relative;
+        }
+
+        .compose textarea {
+            width: 100%;
+            min-height: 100px;
+            border: 2px solid #e1e8ed;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .compose textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+            transform: scale(1.02);
+        }
+
+        .char-count {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.8rem;
+            color: #666;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        .char-count.warning {
+            color: #ff6b6b;
+        }
+
+        .compose-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .post-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .post-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .post-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .feed {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .feed::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .feed::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .feed::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            border-radius: 10px;
+        }
+
+        .post {
+            padding: 25px 30px;
+            border-bottom: 1px solid #e1e8ed;
+            transition: all 0.3s ease;
+            position: relative;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .post:hover {
+            background: rgba(79, 172, 254, 0.05);
+            transform: translateX(5px);
+        }
+
+        .post:last-child {
+            border-bottom: none;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .post-info h3 {
+            font-size: 1.1rem;
+            color: #1a1a1a;
+            margin-bottom: 5px;
+        }
+
+        .post-time {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .post-content {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 30px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .action-btn:hover {
+            background: rgba(79, 172, 254, 0.1);
+            color: #4facfe;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.liked {
+            color: #ff6b6b;
+        }
+
+        .action-btn.retweeted {
+            color: #51cf66;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #4facfe;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #51cf66, #40c057);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .compose, .post {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MicroShare</h1>
+            <p>Share your thoughts with the world</p>
+        </div>
+        
+        <div class="compose">
+            <form class="compose-form" id="composeForm">
+                <div class="textarea-container">
+                    <textarea 
+                        id="postContent" 
+                        placeholder="What's happening?"
+                        maxlength="280"
+                    ></textarea>
+                    <div class="char-count" id="charCount">280</div>
+                </div>
+                <div class="compose-bottom">
+                    <div class="stats">
+                        <span>Posts: <strong id="postCount">0</strong></span>
+                        <span>Total Likes: <strong id="likeCount">0</strong></span>
+                    </div>
+                    <button type="submit" class="post-btn" id="postBtn">Post</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="feed" id="feed">
+            <div class="empty-state">
+                <h3>Welcome to MicroShare!</h3>
+                <p>Share your first thought to get started.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        class MicroBlog {
+            constructor() {
+                this.posts = [];
+                this.postCount = 0;
+                this.totalLikes = 0;
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.form = document.getElementById('composeForm');
+                this.textarea = document.getElementById('postContent');
+                this.charCount = document.getElementById('charCount');
+                this.postBtn = document.getElementById('postBtn');
+                this.feed = document.getElementById('feed');
+                this.postCountEl = document.getElementById('postCount');
+                this.likeCountEl = document.getElementById('likeCount');
+                this.notification = document.getElementById('notification');
+            }
+
+            bindEvents() {
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                this.textarea.addEventListener('input', () => this.updateCharCount());
+                this.textarea.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        this.handleSubmit(e);
+                    }
+                });
+            }
+
+            updateCharCount() {
+                const remaining = 280 - this.textarea.value.length;
+                this.charCount.textContent = remaining;
+                this.charCount.classList.toggle('warning', remaining < 20);
+                this.postBtn.disabled = remaining < 0 || this.textarea.value.trim() === '';
+            }
+
+            handleSubmit(e) {
+                e.preventDefault();
+                const content = this.textarea.value.trim();
+                if (content && content.length <= 280) {
+                    this.createPost(content);
+                    this.textarea.value = '';
+                    this.updateCharCount();
+                    this.showNotification('Post shared successfully!');
+                }
+            }
+
+            createPost(content) {
+                const post = {
+                    id: Date.now(),
+                    content: content,
+                    timestamp: new Date(),
+                    likes: 0,
+                    retweets: 0,
+                    liked: false,
+                    retweeted: false
+                };
+
+                this.posts.unshift(post);
+                this.postCount++;
+                this.updateStats();
+                this.renderPosts();
+            }
+
+            renderPosts() {
+                if (this.posts.length === 0) {
+                    this.feed.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Welcome to MicroShare!</h3>
+                            <p>Share your first thought to get started.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                this.feed.innerHTML = this.posts.map(post => `
+                    <div class="post" data-post-id="${post.id}">
+                        <div class="post-header">
+                            <div class="avatar">You</div>
+                            <div class="post-info">
+                                <h3>Your Post</h3>
+                                <div class="post-time">${this.formatTime(post.timestamp)}</div>
+                            </div>
+                        </div>
+                        <div class="post-content">${this.escapeHtml(post.content)}</div>
+                        <div class="post-actions">
+                            <button class="action-btn ${post.liked ? 'liked' : ''}" onclick="microBlog.toggleLike(${post.id})">
+                                ❤️ <span>${post.likes}</span>
+                            </button>
+                            <button class="action-btn ${post.retweeted ? 'retweeted' : ''}" onclick="microBlog.toggleRetweet(${post.id})">
+                                🔄 <span>${post.retweets}</span>
+                            </button>
+                            <button class="action-btn" onclick="microBlog.deletePost(${post.id})">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            toggleLike(postId) {
+                const post = this.posts.find(p => p.id === postId);
+                if (post) {
+                    if (post.liked) {
+                        post.likes--;
+                        this.totalLikes--;
+                        post.liked = false;
+                    } else {
+                        post.likes++;
+                        this.totalLikes++;
+                        post.liked = true;
+                        this.showNotification('Post liked!');
+                    }
+                    this.updateStats();
+                    this.renderPosts();
+                }
+            }
+
+            toggleRetweet(postId) {
+                const post = this.posts.find(p => p.id === postId);
+                if (post) {
+                    if (post.retweeted) {
+                        post.retweets--;
+                        post.retweeted = false;
+                    } else {
+                        post.retweets++;
+                        post.retweeted = true;
+                        this.showNotification('Post retweeted!');
+                    }
+                    this.renderPosts();
+                }
+            }
+
+            deletePost(postId) {
+                const postIndex = this.posts.findIndex(p => p.id === postId);
+                if (postIndex !== -1) {
+                    const post = this.posts[postIndex];
+                    this.totalLikes -= post.likes;
+                    this.posts.splice(postIndex, 1);
+                    this.postCount--;
+                    this.updateStats();
+                    this.renderPosts();
+                    this.showNotification('Post deleted!');
+                }
+            }
+
+            updateStats() {
+                this.postCountEl.textContent = this.postCount;
+                this.likeCountEl.textContent = this.totalLikes;
+            }
+
+            formatTime(timestamp) {
+                const now = new Date();
+                const diff = now - timestamp;
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+
+                if (days > 0) return `${days}d ago`;
+                if (hours > 0) return `${hours}h ago`;
+                if (minutes > 0) return `${minutes}m ago`;
+                return 'Just now';
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            showNotification(message) {
+                this.notification.textContent = message;
+                this.notification.classList.add('show');
+                setTimeout(() => {
+                    this.notification.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // Initialize the micro blog
+        const microBlog = new MicroBlog();
+    </script>
+</body>
+</html>
